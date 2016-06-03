@@ -36,7 +36,7 @@ This node receives a LaunchRequest when the user invokes the skill with the invo
 
 This node receives an IntentRequest when the user speaks a command that maps to an intent. The request object sent to your service includes the specific intent and any defined slot values.
 
-### SessionEnd Request (alexa-http alexa-http session-end)
+### SessionEnd Request (alexa-http session-end)
 
 Your service receives a SessionEndedRequest when a currently open session is closed
 
