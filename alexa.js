@@ -16,7 +16,9 @@
 
 module.exports = function(RED) {
     "use strict";
-    var alexa = require('../vendor/alexa-app');
+    var alexa = require('./vendor/alexa-app');
+    var mustache = require('mustache');
+
     var skills = {};
 
     function createResponseWrapper(node,res) {
@@ -64,6 +66,7 @@ module.exports = function(RED) {
     function setupAlexaHttpHandler(node, type){
         var skillConfig = node.skillConfig;
         if(!skills.hasOwnProperty(skillConfig.id)){
+            skillConfig.intents = JSON.parse(skillConfig.intents);
             //setup skill
             var skill = new alexa.app(skillConfig.skillname);
             skills[skillConfig.id] = {
@@ -73,8 +76,8 @@ module.exports = function(RED) {
                 sessionEnds: []
             };
 
-            for (var i =0;i<node.skillConfig.intents.length;i++){
-                var intent = node.skillConfig.intents[i];
+            for (var i =0;i<skillConfig.intents.length;i++){
+                var intent = skillConfig.intents[i];
                 skill.intent(intent.name, intent.options,
                   function(request,response, state) {
                     var msgid = RED.util.generateId();
@@ -142,6 +145,7 @@ module.exports = function(RED) {
                 }
             }
             var url = '/'+ skillConfig.id +'/alexa';
+            console.log(url);
             RED.httpNode.post(url, httpMiddleware, callback, errorHandler); 
         }
 
@@ -171,18 +175,9 @@ module.exports = function(RED) {
 
     function AlexaHTTPIntent(n) {
         RED.nodes.createNode(this,n);
-        this.skillConfig = n.skillConfig;
+        this.skillConfig = RED.nodes.getNode(n.skillConfig);
         if (RED.settings.httpNodeRoot !== false) {
             var node = this;
-            node.skillConfig = {id:"testconfig"};
-            node.skillConfig.skillname = 'Sample';
-            node.skillConfig.intents = [{
-                name:'SayNumber',
-                options: {
-                    slots:{number:"NUMBER"},
-                    utterances:[ "say the number {1-100|number}" ]
-                }
-            }];
 
             setupAlexaHttpHandler(node, "IntentRequest");
 
@@ -195,10 +190,56 @@ module.exports = function(RED) {
                 });
             });
         } else {
-            this.warn(RED._("alexa-httpin.errors.not-created"));
+            this.warn(RED._("common.errors.http-root-not-enabled"));
         }
     }
     RED.nodes.registerType("alexa-http intent", AlexaHTTPIntent);
+
+    function AlexaSay(n) {
+        RED.nodes.createNode(this,n);
+        var node = this;
+        node.text = n.text;
+        this.on("input",function(msg) {
+            if (msg.alexaResponse) {
+                var renderedMsg = mustache.render(node.text, msg);
+                msg.alexaResponse.say(renderedMsg);
+            } else {
+                node.warn(RED._("common.errors.no-alexa-response"));
+            }
+            node.send(msg);
+        });
+    }
+    RED.nodes.registerType("alexa-say", AlexaSay);
+
+    function AlexaCard(n) {
+        RED.nodes.createNode(this,n);
+        var node = this;
+        node.cardjson = n.cardjson;
+        this.on("input",function(msg) {
+            if (msg.alexaResponse) {
+                var renderedJson = mustache.render(node.cardjson, msg);
+                msg.alexaResponse.card(JSON.parse(renderedJson));
+            } else {
+                node.warn(RED._("common.errors.no-alexa-response"));
+            }
+            node.send(msg);
+        });
+    }
+    RED.nodes.registerType("alexa-card", AlexaCard);
+
+    function AlexaLinkAccount(n) {
+        RED.nodes.createNode(this,n);
+        var node = this;
+        this.on("input",function(msg) {
+            if (msg.alexaResponse) {
+                msg.alexaResponse.linkAccount();
+            } else {
+                node.warn(RED._("common.errors.no-alexa-response"));
+            }
+            node.send(msg);
+        });
+    }
+    RED.nodes.registerType("alexa-link-account", AlexaLinkAccount);
 
     function AlexaHTTPOut(n) {
         RED.nodes.createNode(this,n);
@@ -221,23 +262,24 @@ module.exports = function(RED) {
                 msg.res._res.status(200).json(msg.alexaResponse.response);
                 
             } else {
-                node.warn(RED._("alexa-httpin.errors.no-alexa-response"));
+                node.warn(RED._("common.errors.no-alexa-response"));
             }
         });
     }
     RED.nodes.registerType("alexa-http response", AlexaHTTPOut);
 
-    function AlexaSay(n) {
-        RED.nodes.createNode(this,n);
-        var node = this;
-        this.on("input",function(msg) {
-            if (msg.alexaResponse) {
-                msg.alexaResponse.say("Hello world");
-            } else {
-                node.warn(RED._("alexa-httpin.errors.no-alexa-response"));
-            }
-            node.send(msg);
-        });
-    }
-    RED.nodes.registerType("alexa-say", AlexaSay);
+    RED.httpAdmin.post('/alexa/format-intents', RED.auth.needsPermission(""), function(req, res, next) {
+        var intents = JSON.parse(req.body.intents);
+        var skill = new alexa.app(req.body.skillname);
+
+        for (var i =0;i<intents.length;i++){    
+            var intent = intents[i];
+            skill.intent(intent.name, intent.options);
+        }
+
+        var response = {};
+        response.schema = skill.schema();
+        response.utterances = skill.utterances()
+        res.json(response);
+    });
 }

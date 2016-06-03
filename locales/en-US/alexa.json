@@ -1,4 +1,13 @@
 {
+    "common": {
+        "label": {
+            "name": "Name"
+        },
+        "errors": {
+            "no-alexa-response": "No Alexa response in node message",
+            "http-root-not-enabled": "Can not setup endpoint, httpNodeRoot not enabled"
+        }
+    },
     "alexa-skill-config":{
         "label": {
             "skillname": "Skill Name",
@@ -8,7 +17,12 @@
             "account-linking":"Account Linking",
             "skill":"Skill"
         },
+        "placeholder": {
+            "skillname": "New Skill Name"
+        },
         "tip": {
+            "intents":"<b>Note:</b> Expects a json array of {name, options} intent objects. <a href=\"https://github.com/matt-kruse/alexa-app#schema-syntax\" target=\"_blank\">alexa-app Reference</a><br /><br />using <a href=\"https://developer.amazon.com/public/solutions/alexa/alexa-skills-kit/docs/defining-the-voice-interface#h2_speech_input\" target=\"_blank\">Amazon Slot Types</a>",
+            "endpoint":"<b>Note:</b> This it the url you will enter at developer.amazon.com when you configure your skill."
         },
         "errors": {
         }
@@ -41,5 +55,13 @@
         "status": {
             "requesting": "requesting"
         }
+    },
+    "alexa-card": {
+        "label": {
+            "name":"Name",
+            "object": "Card JSON"
+
+        },
+        "tip": "<b>Note:</b> <a href=\"https://developer.amazon.com/public/solutions/alexa/alexa-skills-kit/docs/alexa-skills-kit-interface-reference#card-object\" target=\"_blank\">Card Object Reference</a>"
     }
 }

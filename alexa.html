@@ -6,56 +6,55 @@
         <div id="alexa-skill-config-tabs-setup" style="display:none">
                 <div class="form-row">
                     <label for="node-input-skillname"><i class="fa fa-tag"></i> <span data-i18n="alexa-skill-config.label.skillname"></span></label>
-                    <input type="text" id="node-input-skillname" />
+                    <input type="text" id="node-config-input-skillname" data-i18n="[placeholder]alexa-skill-config.placeholder.skillname" />
                 </div>
-        </div>
-        <div id="alexa-skill-config-tabs-intents" style="display:none">
-            <div class="form-row node-input-config-intents-container-row" style="margin-bottom: 0px;">
-                <div id="node-input-config-intents-container-div" style="box-sizing: border-box; border-radius: 5px; height: 300px; padding: 5px; border: 1px solid #ccc; overflow-y:scroll;">
-                    <ol id="node-input-config-intents-container" style=" list-style-type:none; margin: 0;"></ol>
+                <div class="form-row" style="margin-bottom: 0px;">
+                    <label for="node-input-intents"><i class="fa fa-wrench"></i> <span data-i18n="alexa-skill-config.label.intents"></span></label>
+                    <input type="hidden" id="node-config-input-intents" autofocus="autofocus">
                 </div>
-            </div>
-            <div class="form-row">
-                <a href="#" class="editor-button editor-button-small" id="node-input-config-add-intent" style="margin-top: 4px;"><i class="fa fa-plus"></i> <span data-i18n="alexa-skill-config.label.intent"></span></a>
-            </div>
+                <div class="form-row node-intents-editor-row">
+                    <div style="height: 200px;" class="node-text-editor" id="node-input-intents-editor" ></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-tips" data-i18n="[html]alexa-skill-config.tip.intents" style="max-width:575px;"></div>
+                </div>
         </div>
         <div id="alexa-skill-config-tabs-account-linking" style="display:none">
             <div class="form-row">
                 <label for="node-config-input-clientId"><i class="fa fa-user"></i> Client Id</label>
                 <input type="text" id="node-config-input-clientId" />
             </div>
-            <div class="form-row">
-                <label for="node-config-input-redirectUrl"><i class="fa fa-user"></i> Redirect URL</label>
-                <input type="text" id="node-config-input-redirectUrl" />
-            </div>
         </div>
         <div id="alexa-skill-config-tabs-skill" style="display:none">
             <div class="form-row">
-                <label for="node-config-input-reg_page_title"><i class="fa fa-user"></i> Title</label>
-                <input type="text" id="node-config-input-reg_page_title">
+                <label for="node-skill-endpoint"><i class="fa fa-user"></i> Endpoint</label>
+                <input type="text" id="node-skill-endpoint" disabled="disabled" />
+                <div class="form-tips" data-i18n="[html]alexa-skill-config.tip.endpoint" style="max-width:575px;"></div>
             </div>
             <div class="form-row">
-                <label for="node-config-input-reg_page_header"><i class="fa fa-user"></i> Heading</label>
-                <input type="text" id="node-config-input-reg_page_header">
+                <label for="node-schema"><i class="fa fa-user"></i> Schema</label>
             </div>
             <div class="form-row">
-                <label for="node-config-input-reg_page_description"><i class="fa fa-user"></i> Description</label>
-                <input type="text" id="node-config-input-reg_page_description">
+                <textarea id="node-schema" rows="4" cols="110" style="width:550px;"></textarea>
             </div>
             <div class="form-row">
-                <label for="node-config-input-reg_page_description"><i class="fa fa-user"></i> Submit Txt</label>
-                <input type="text" id="node-config-input-reg_page_action">
+                <label for="node-utterances"><i class="fa fa-user"></i> Utterances</label>
+            </div>
+            <div class="form-row">
+                <textarea id="node-utterances" rows="4" cols="110" style="width:550px;"></textarea>
             </div>
         </div>
     </div>
 </script>
 
 <script type="text/javascript">
+    var defaultIntents = JSON.stringify([{name: "SampleIntent",options: { slots:{NAME:"LITERAL",AGE:"NUMBER"}, utterances:[ "my {name is|name's} {names|NAME} and {I am|I'm} {1-100|AGE}{ years old|}"]}}], null, 2);
+
     RED.nodes.registerType('alexa-skill-config',{
         category: 'config',
         defaults: {
             skillname: {value:"",required:true},
-            intents: {value:[],required:true},
+            intents: {required:true, value:defaultIntents},
             redirectUrl: {value:""},
             clientId: {value:"needsADefault", required:true}
         },
@@ -72,15 +71,19 @@
                 onchange: function(tab) {
                     $("#alexa-skill-config-tabs-content").children().hide();
                     $("#" + tab.id).show();
+                    if(tab.id === "alexa-skill-config-tabs-skill"){
+                        var data = {skillname:$("#node-config-input-skillname").val()};
+                        data.intents = node.intentsEditor.getValue();
+                        $.post('/alexa/format-intents', data, function(response) {
+                            $("#node-schema").val(response.schema);
+                            $("#node-utterances").val(response.utterances);
+                        }, 'json');
+                    }
                 }
             });
             tabs.addTab({
                 id: "alexa-skill-config-tabs-setup",
                 label: this._("alexa-skill-config.label.setup")
-            });
-            tabs.addTab({
-                id: "alexa-skill-config-tabs-intents",
-                label: this._("alexa-skill-config.label.intents")
             });
             tabs.addTab({
                 id: "alexa-skill-config-tabs-account-linking",
@@ -90,8 +93,22 @@
                 id: "alexa-skill-config-tabs-skill",
                 label: this._("alexa-skill-config.label.skill")
             });
+            
             setTimeout(function() { tabs.resize()},0);
 
+            this.intentsEditor = RED.editor.createEditor({
+                id: 'node-input-intents-editor',
+                mode: 'ace/mode/json',
+                value: $("#node-config-input-intents").val()
+            });
+
+            var reg_url = location.protocol+'//'+location.hostname+(location.port ? ':'+location.port: '');
+            var path = reg_url + "/" + node.id+'/alexa';
+            $("#node-skill-endpoint").val(path);
+        },
+        oneditsave: function(){
+            $("#node-config-input-intents").val(this.intentsEditor.getValue());
+            delete this.intentsEditor;
         }
     });
 </script>
@@ -108,24 +125,26 @@
 </script>
 
 <script type="text/x-red" data-help-name="alexa-http launch">
+    <p>This node receives a LaunchRequest when the user invokes the skill with the invocation name, but does not provide any command mapping to an intent.</p>
 </script>
 
 <script type="text/javascript">
     RED.nodes.registerType('alexa-http launch',{
         category: 'alexa',
-        color:"#2952a3",
+        color:"#428ABB",
         defaults: {
             name: {value:""},
             skillConfig: {type:"alexa-skill-config", required:true}
         },
         inputs:0,
         outputs:1,
-        icon: "globe_input.png",
+        icon: "alexa.png",
         label: function() {
             if(this.name){
                 return this.name;
             }else if(this.skillConfig){
-                return this.skillConfig.skillname + " Launch";
+                var config = RED.nodes.node(this.skillConfig);
+                return config.skillname + " Launch";
             }else{
                 return "Alexa Launch";
             }
@@ -155,12 +174,13 @@
 </script>
 
 <script type="text/x-red" data-help-name="alexa-http intent">
+    <p>This node receives an IntentRequest when the user speaks a command that maps to an intent. The request object sent to your service includes the specific intent and any defined slot values.</p>
 </script>
 
 <script type="text/javascript">
     RED.nodes.registerType('alexa-http intent',{
         category: 'alexa',
-        color:"#2952a3",
+        color:"#428ABB",
         defaults: {
             name: {value:""},
             skillConfig: {type:"alexa-skill-config", required:true},
@@ -168,21 +188,22 @@
         },
         inputs:0,
         outputs:1,
-        icon: "globe_input.png",
+        icon: "alexa.png",
         label: function() {
             if(this.name){
                 return this.name;
             }else if(this.skillConfig){
-                return this.skillConfig.skillname + " Intent";
+                var config = RED.nodes.node(this.skillConfig);
+                return config.skillname + " Intent";
             }else{
-                return "Alexa Intent";
+                return "Intent Request";
             }
         },
         labelStyle: function() {
             return this.name?"node_label_italic":"";
         },
         paletteLabel: function() {
-          return "Alexa Intent";
+          return "Intent Request";
         },
         oneditprepare: function() {
 
@@ -203,36 +224,179 @@
 </script>
 
 <script type="text/x-red" data-help-name="alexa-http session-end">
+    <p>Your service receives a SessionEndedRequest when a currently open session is closed</p> 
+    <p>Possible reasons for closure:
+        <ol>
+            <li>The user says "exit"</li>
+            <li>The user does not respond or says something that does not match an intent</li>
+            <li>An error occurs</li>
+        </ol>
+    </p>
 </script>
 
 <script type="text/javascript">
     RED.nodes.registerType('alexa-http session-end',{
         category: 'alexa',
-        color:"#2952a3",
+        color:"#428ABB",
         defaults: {
             name: {value:""},
             skillConfig: {type:"alexa-skill-config", required:true}
         },
         inputs:0,
         outputs:1,
-        icon: "globe_input.png",
+        icon: "alexa.png",
         label: function() {
             if(this.name){
                 return this.name;
             }else if(this.skillConfig){
-                return this.skillConfig.skillname + " SessionEnd";
+                var config = RED.nodes.node(this.skillConfig);
+                return config.skillname + " SessionEnd";
             }else{
-                return "Alexa SessionEnd";
+                return "SessionEnd Request";
             }
         },
         labelStyle: function() {
             return this.name?"node_label_italic":"";
         },
         paletteLabel: function() {
-          return "Alexa SessionEnd";
+          return "SessionEnd Request";
         },
         oneditprepare: function() {
 
+        }
+    });
+</script>
+
+<script type="text/x-red" data-template-name="alexa-say">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> <span data-i18n="common.label.name"></span></label>
+        <input type="text" id="node-input-name" data-i18n="[placeholder]common.label.name">
+    </div>
+    <div class="form-row">
+        <label for="node-input-text"><i class="fa fa-tag"></i> Text</label>
+        <input type="text" id="node-input-text" data-i18n="[placeholder]common.label.name">
+    </div>
+</script>
+
+<script type="text/x-red" data-help-name="alexa-say">
+    <p>Tell Alexa to say something. Can use multiple say nodes and the phrases will be appended to each other</p>
+</script>
+
+<script type="text/javascript">
+    RED.nodes.registerType('alexa-say',{
+        category: 'alexa',
+        color:"#428ABB",
+        defaults: {
+            name: {value:""},
+            text: {value:"", required:true}
+        },
+        inputs:1,
+        outputs:1,
+        icon: "alexa.png",
+        label: function() {
+            return this.name || "Say"
+        },
+        paletteLabel: function() {
+          return "Say";
+        },
+        labelStyle: function() {
+            return this.name?"node_label_italic":"";
+        },
+        oneditprepare: function() {
+
+        }
+    });
+</script>
+
+<script type="text/x-red" data-template-name="alexa-card">
+    <div class="form-row" style="margin-bottom: 0px;">
+        <label for="node-input-cardjson"><i class="fa fa-wrench"></i> <span data-i18n="alexa-card.label.object"></span></label>
+        <input type="hidden" id="node-input-cardjson" autofocus="autofocus">
+    </div>
+    <div class="form-row node-text-editor-row">
+        <div style="height: 200px;" class="node-text-editor" id="node-input-card-editor" ></div>
+    </div>
+    <div class="form-row">
+        <div class="form-tips" data-i18n="[html]alexa-card.tip"></div>
+    </div>
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> <span data-i18n="alexa-card.label.name"></span></label>
+        <input type="text" id="node-input-name" data-i18n="[placeholder]alexa-card.label.name">
+    </div>
+</script>
+
+<script type="text/x-red" data-help-name="alexa-card">
+    <p>Adds a card to the users Alexa app </p>
+    <p>
+    For Object definition see <a href="https://developer.amazon.com/public/solutions/alexa/alexa-skills-kit/docs/alexa-skills-kit-interface-reference#card-object" target="_blank">developer.amazon.com</a></p>
+</script>
+
+<script type="text/javascript">
+    var defaultCard = JSON.stringify({type: "Simple", title: "My Simple Title", content: "My very simple content"}, null, 2);
+
+    RED.nodes.registerType('alexa-card',{
+        category: 'alexa',
+        color:"#428ABB",
+        defaults: {
+            name: {value:""},
+            cardjson: {value:defaultCard, require:true}
+        },
+        inputs:1,
+        outputs:1,
+        icon: "alexa.png",
+        label: function() {
+            return this.name || "Card"
+        },
+        paletteLabel: function() {
+          return "Card";
+        },
+        labelStyle: function() {
+            return this.name?"node_label_italic":"";
+        },
+        oneditprepare: function() {
+            this.editor = RED.editor.createEditor({
+                id: 'node-input-card-editor',
+                mode: 'ace/mode/json',
+                value: $("#node-input-cardjson").val()
+            });
+
+        },
+        oneditsave: function(){
+            $("#node-input-cardjson").val(this.editor.getValue());
+            delete this.editor;
+        }
+    });
+</script>
+
+<script type="text/x-red" data-template-name="alexa-link-account">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> <span data-i18n="common.label.name"></span></label>
+        <input type="text" id="node-input-name" data-i18n="[placeholder]common.label.name">
+    </div>
+</script>
+
+<script type="text/x-red" data-help-name="alexa-link-account">
+    <p>Adds a card to the response instructing the user how to link their account to the skill.</p>
+</script>
+
+<script type="text/javascript">
+    RED.nodes.registerType('alexa-link-account',{
+        category: 'alexa',
+        color:"#428ABB",
+        defaults: {
+            name: {value:""}
+        },
+        inputs:1,
+        outputs:1,
+        icon: "alexa.png",
+        label: function() {
+            return this.name || "Link Account"
+        },
+        paletteLabel: function() {
+          return "Link Account";
+        },
+        labelStyle: function() {
+            return this.name?"node_label_italic":"";
         }
     });
 </script>
@@ -245,18 +409,20 @@
 </script>
 
 <script type="text/x-red" data-help-name="alexa-http response">
+    <p>Completes a response from an alexa request. Required for any Launch, Intent or SessionEnd request.</p>
 </script>
 
 <script type="text/javascript">
     RED.nodes.registerType('alexa-http response',{
         category: 'alexa',
-        color:"#2952a3",
+        color:"#428ABB",
         defaults: {
             name: {value:""},
         },
         inputs:1,
         outputs:0,
-        icon: "globe_input.png",
+        icon: "alexa.png",
+        align: "right",
         label: function() {
             return this.name || "Alexa Response"
         },
@@ -270,40 +436,5 @@
 
         }
 
-    });
-</script>
-
-<script type="text/x-red" data-template-name="alexa-say">
-    <div class="form-row">
-        <label for="node-input-name"><i class="fa fa-tag"></i> <span data-i18n="common.label.name"></span></label>
-        <input type="text" id="node-input-name" data-i18n="[placeholder]common.label.name">
-    </div>
-</script>
-
-<script type="text/x-red" data-help-name="alexa-say">
-</script>
-
-<script type="text/javascript">
-    RED.nodes.registerType('alexa-say',{
-        category: 'alexa',
-        color:"#2952a3",
-        defaults: {
-            name: {value:""},
-        },
-        inputs:1,
-        outputs:1,
-        icon: "globe_input.png",
-        label: function() {
-            return this.name || "Alexa Say"
-        },
-        paletteLabel: function() {
-          return "Alexa Say";
-        },
-        labelStyle: function() {
-            return this.name?"node_label_italic":"";
-        },
-        oneditprepare: function() {
-
-        }
     });
 </script>
