@@ -1,0 +1,45 @@
+{
+    "alexa-skill-config":{
+        "label": {
+            "skillname": "Skill Name",
+            "intents": "Intents",
+            "intent": "Intent",
+            "setup": "Setup",
+            "account-linking":"Account Linking",
+            "skill":"Skill"
+        },
+        "tip": {
+        },
+        "errors": {
+        }
+    },
+	"alexa-httpin":{
+        "label": {
+            "skill": "Skill",
+            "name": "Name"
+        },
+        "setby": "- set by msg.method -",
+        "basicauth": "Use basic authentication?",
+        "utf8": "a UTF-8 string",
+        "binary": "a binary buffer",
+        "json": "a parsed JSON object",
+        "tip": {
+            "in": "The url will be relative to ",
+            "res": "The messages sent to this node <b>must</b> originate from an <i>http input</i> node",
+            "req": "Tip: If the JSON parse fails the fetched string is returned as-is."
+        },
+        "httpreq": "http request",
+        "errors": {
+            "not-created": "Cannot create http-in node when httpNodeRoot set to false",
+            "missing-path": "missing path",
+            "no-response": "No response object",
+            "no-alexa-response": "No alexa response object",
+            "json-error": "JSON parse error",
+            "no-url": "No url specified",
+            "deprecated-call":"Deprecated call to __method__"
+        },
+        "status": {
+            "requesting": "requesting"
+        }
+    }
+}
