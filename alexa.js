@@ -173,6 +173,28 @@ module.exports = function(RED) {
     }
     RED.nodes.registerType("alexa-skill-config", AlexaSkillConfig);
 
+    function AlexaHTTPLaunch(n) {
+        RED.nodes.createNode(this,n);
+        this.skillConfig = RED.nodes.getNode(n.skillConfig);
+        if (RED.settings.httpNodeRoot !== false) {
+            var node = this;
+
+            setupAlexaHttpHandler(node, "LaunchRequest");
+
+            this.on("close",function() {
+                var node = this;
+                RED.httpNode._router.stack.forEach(function(route,i,routes) {
+                    if (route.route && route.route.path === node.url && route.route.methods[node.method]) {
+                        routes.splice(i,1);
+                    }
+                });
+            });
+        } else {
+            this.warn(RED._("common.errors.http-root-not-enabled"));
+        }
+    }
+    RED.nodes.registerType("alexa-http launch", AlexaHTTPLaunch);
+
     function AlexaHTTPIntent(n) {
         RED.nodes.createNode(this,n);
         this.skillConfig = RED.nodes.getNode(n.skillConfig);
@@ -194,6 +216,28 @@ module.exports = function(RED) {
         }
     }
     RED.nodes.registerType("alexa-http intent", AlexaHTTPIntent);
+
+    function AlexaHTTPSessionEnd(n) {
+        RED.nodes.createNode(this,n);
+        this.skillConfig = RED.nodes.getNode(n.skillConfig);
+        if (RED.settings.httpNodeRoot !== false) {
+            var node = this;
+
+            setupAlexaHttpHandler(node, "SessionEndRequest");
+
+            this.on("close",function() {
+                var node = this;
+                RED.httpNode._router.stack.forEach(function(route,i,routes) {
+                    if (route.route && route.route.path === node.url && route.route.methods[node.method]) {
+                        routes.splice(i,1);
+                    }
+                });
+            });
+        } else {
+            this.warn(RED._("common.errors.http-root-not-enabled"));
+        }
+    }
+    RED.nodes.registerType("alexa-http session-end", AlexaHTTPSessionEnd);
 
     function AlexaSay(n) {
         RED.nodes.createNode(this,n);
