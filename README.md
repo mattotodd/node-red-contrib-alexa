@@ -21,38 +21,38 @@ The pattern of usage is similar to using node-reds http in and out nodes.
 
 #Nodes
 
-## Config Node (alexa-skill-config)
+### Config Node (alexa-skill-config)
 
 This node is used to define your skill, and can be used across multiple Alexa Request nodes. The skills tab will
 format you schema and untterances to make it easier to submit them to amazon.
 
 The nodes within this library map to the [ASK documentation][4]
 
-## Launch Request (alexa-http launch)
+### Launch Request (alexa-http launch)
 
 This node receives a LaunchRequest when the user invokes the skill with the invocation name, but does not provide any command mapping to an intent.
 
-## Intent Request (alexa-http intent)
+### Intent Request (alexa-http intent)
 
 This node receives an IntentRequest when the user speaks a command that maps to an intent. The request object sent to your service includes the specific intent and any defined slot values.
 
-## SessionEnd Request (alexa-http alexa-http session-end)
+### SessionEnd Request (alexa-http alexa-http session-end)
 
 Your service receives a SessionEndedRequest when a currently open session is closed
 
-## Say (alexa-say)
+### Say (alexa-say)
 
 Tell Alexa to say something. Can use multiple `say` nodes and the phrases will be appended to each other
 
-## Card (alexa-card)
+### Card (alexa-card)
 
 Adds a card to the users Alexa app
 
-## Link Account (alexa-link-account)
+### Link Account (alexa-link-account)
 
 Adds a card to the response instructing the user how to link their account to the skill.
 
-## Response (alexa-http response)
+### Response (alexa-http response)
 
 Completes a response from an alexa request. Required for any Launch, Intent or SessionEnd request.
 
