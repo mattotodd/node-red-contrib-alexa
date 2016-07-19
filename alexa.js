@@ -17,6 +17,7 @@
 module.exports = function(RED) {
     "use strict";
     var alexa = require('./vendor/alexa-app');
+    var verifier = require('alexa-verifier');
     var mustache = require('mustache');
 
     var skills = {};
@@ -61,6 +62,42 @@ module.exports = function(RED) {
             }
         });
         return wrapper;
+    }
+
+    function validateAlexaRequest(req, res, next) {
+      if (!RED.settings.alexa.verifyRequests){
+        return next();
+      }else if(!req.headers.signaturecertchainurl){
+        res.status(403).json({ status: 'failure', reason: er });
+      }
+      var er;
+      // mark the request body as already having been parsed so it's ignored by 
+      // other body parser middlewares 
+      req._body = true;
+      req.rawBody = '';
+      req.on('data', function(data) {
+        return req.rawBody += data;
+      });
+      req.on('end', function() {
+        var cert_url, er, error, requestBody, signature;
+        try {
+          req.body = JSON.parse(req.rawBody);
+        } catch (error) {
+          er = error;
+          req.body = {};
+        }
+        cert_url = req.headers.signaturecertchainurl;
+        signature = req.headers.signature;
+        requestBody = req.rawBody;
+        verifier(cert_url, signature, requestBody, function(er) {
+          if (er) {
+            RED.log.error('error validating the alexa cert:', er);
+            res.status(401).json({ status: 'failure', reason: er });
+          } else {
+            next();
+          }
+        });
+      });
     }
 
     function setupAlexaHttpHandler(node, type){
@@ -133,7 +170,8 @@ module.exports = function(RED) {
             var callback = function(req,res) {
                 skill.request(req.body, {req:req, res:res})
                 .catch(function(e){
-                    RED.log.error(e);
+                    res.sendStatus(500);
+                    RED.log.error("Error handling alexa request", e);
                 });
             };
 
@@ -145,8 +183,7 @@ module.exports = function(RED) {
                 }
             }
             var url = '/'+ skillConfig.id +'/alexa';
-            console.log(url);
-            RED.httpNode.post(url, httpMiddleware, callback, errorHandler); 
+            RED.httpNode.post(url, validateAlexaRequest, httpMiddleware, callback, errorHandler); 
         }
 
         switch(type){
