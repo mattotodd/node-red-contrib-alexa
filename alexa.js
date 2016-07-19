@@ -132,7 +132,7 @@ module.exports = function(RED) {
 
             var callback = function(req,res) {
                 skill.request(req.body, {req:req, res:res})
-                .catch(e => {
+                .catch(function(e){
                     RED.log.error(e);
                 });
             };
