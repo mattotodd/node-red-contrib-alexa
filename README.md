@@ -19,7 +19,7 @@ Run the following command in the root directory of your Node-RED install
 
 The pattern of usage is similar to using node-reds http in and out nodes.
 
-### Enable Verification of incoming requests
+#### Enable Verification of incoming requests
 
 To verify incoming requests are coming from Amazon, you can set `alexa.verifyRequests` to true in your node-red settings. 
 (add the alexa key if it doesn't already exist)
