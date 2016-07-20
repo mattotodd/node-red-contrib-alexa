@@ -65,7 +65,7 @@ module.exports = function(RED) {
     }
 
     function validateAlexaRequest(req, res, next) {
-      if (!RED.settings.alexa.verifyRequests){
+      if (!RED.settings.alexa || !RED.settings.alexa.verifyRequests){
         return next();
       }else if(!req.headers.signaturecertchainurl){
         res.status(403).json({ status: 'failure', reason: er });
