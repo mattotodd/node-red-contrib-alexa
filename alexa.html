@@ -1,4 +1,4 @@
-<script type="text/x-red" data-template-name="alexa-skill-config">
+<script type="text/x-red" data-template-name="alexa-skill">
     <div class="form-row">
         <ul style="background: #fff; min-width: 600px; margin-bottom: 20px;" id="alexa-skill-config-tabs"></ul>
     </div>
@@ -10,7 +10,6 @@
                 </div>
                 <div class="form-row" style="margin-bottom: 0px;">
                     <label for="node-input-intents"><i class="fa fa-wrench"></i> <span data-i18n="alexa-skill-config.label.intents"></span></label>
-                    <input type="hidden" id="node-config-input-intents" autofocus="autofocus">
                 </div>
                 <div class="form-row node-intents-editor-row">
                     <div style="height: 200px;" class="node-text-editor" id="node-input-intents-editor" ></div>
@@ -22,7 +21,6 @@
         <div id="alexa-skill-config-tabs-account-linking" style="display:none">
             <div class="form-row">
                 <label for="node-config-input-clientId"><i class="fa fa-user"></i> Client Id</label>
-                <input type="text" id="node-config-input-clientId" />
             </div>
         </div>
         <div id="alexa-skill-config-tabs-skill" style="display:none">
@@ -45,12 +43,13 @@
             </div>
         </div>
     </div>
+    <input type="hidden" id="node-config-input-intents" autofocus="autofocus">
 </script>
 
 <script type="text/javascript">
     var defaultIntents = JSON.stringify([{name: "SampleIntent",options: { slots:{NAME:"LITERAL",AGE:"NUMBER"}, utterances:[ "my {name is|name's} {names|NAME} and {I am|I'm} {1-100|AGE}{ years old|}"]}}], null, 2);
 
-    RED.nodes.registerType('alexa-skill-config',{
+    RED.nodes.registerType('alexa-skill',{
         category: 'config',
         defaults: {
             skillname: {value:"",required:true},
@@ -108,6 +107,7 @@
         },
         oneditsave: function(){
             $("#node-config-input-intents").val(this.intentsEditor.getValue());
+            this.intents = this.intentsEditor.getValue()
             delete this.intentsEditor;
         }
     });
@@ -134,7 +134,7 @@
         color:"#96d5e3",
         defaults: {
             name: {value:""},
-            skillConfig: {type:"alexa-skill-config", required:true}
+            skillConfig: {type:"alexa-skill", required:true}
         },
         inputs:0,
         outputs:1,
@@ -183,7 +183,7 @@
         color:"#96d5e3",
         defaults: {
             name: {value:""},
-            skillConfig: {type:"alexa-skill-config", required:true},
+            skillConfig: {type:"alexa-skill", required:true},
             url: {value:"/alexa_test",required:true},
         },
         inputs:0,
@@ -240,7 +240,7 @@
         color:"#96d5e3",
         defaults: {
             name: {value:""},
-            skillConfig: {type:"alexa-skill-config", required:true}
+            skillConfig: {type:"alexa-skill", required:true}
         },
         inputs:0,
         outputs:1,

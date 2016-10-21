@@ -5,8 +5,6 @@ node-red-contrib-alexa
 
 [Node-Red][1] node for Amazon [Alexa Skills Kit (ASK)][2].
 
-#Dependencies
-
 The library makes use of the [alexa-app][3] package to format requests as well as define your schema and utterances
 
 #Install
@@ -14,6 +12,10 @@ The library makes use of the [alexa-app][3] package to format requests as well a
 Run the following command in the root directory of your Node-RED install
 
     npm install node-red-contrib-alexa
+
+#Example
+
+For an example, see the [node-red-alexa](https://github.com/mattotodd/node-red-alexa) fork of node-red that includes this library
 
 #Usage
 

@@ -208,7 +208,7 @@ module.exports = function(RED) {
         this.intents = n.intents;
         var node = this;
     }
-    RED.nodes.registerType("alexa-skill-config", AlexaSkillConfig);
+    RED.nodes.registerType("alexa-skill", AlexaSkillConfig);
 
     function AlexaHTTPLaunch(n) {
         RED.nodes.createNode(this,n);
