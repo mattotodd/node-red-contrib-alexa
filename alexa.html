@@ -73,7 +73,7 @@
                     if(tab.id === "alexa-skill-config-tabs-skill"){
                         var data = {skillname:$("#node-config-input-skillname").val()};
                         data.intents = node.intentsEditor.getValue();
-                        $.post('/alexa/format-intents', data, function(response) {
+                        $.post('alexa/format-intents', data, function(response) {
                             $("#node-schema").val(response.schema);
                             $("#node-utterances").val(response.utterances);
                         }, 'json');
